@@ -1,0 +1,54 @@
+﻿[
+    {
+        "name":  "yiye",
+        "home":  "%USERPROFILE%\\.codex-yiye"
+    },
+    {
+        "name":  "man",
+        "home":  "%USERPROFILE%\\.codex-man"
+    },
+    {
+        "name":  "bal",
+        "home":  "%USERPROFILE%\\.codex-bal"
+    },
+    {
+        "name":  "dil",
+        "home":  "%USERPROFILE%\\.codex-dil"
+    },
+    {
+        "name":  "vonadler",
+        "home":  "%USERPROFILE%\\.codex-vonadler"
+    },
+    {
+        "home":  "%USERPROFILE%\\.codex-htoo",
+        "name":  "htoo"
+    },
+    {
+        "home":  "%USERPROFILE%\\.codex-hulk",
+        "name":  "hulk"
+    },
+    {
+        "home":  "%USERPROFILE%\\.codex-mari",
+        "name":  "mari"
+    },
+    {
+        "home":  "%USERPROFILE%\\.codex-anth",
+        "name":  "anth"
+    },
+    {
+        "home":  "%USERPROFILE%\\.codex-mers",
+        "name":  "mers"
+    },
+    {
+        "home":  "%USERPROFILE%\\.codex-jamu",
+        "name":  "jamu"
+    },
+    {
+        "home":  "%USERPROFILE%\\.codex-nore",
+        "name":  "nore"
+    },
+    {
+        "home":  "%USERPROFILE%\\.codex-tie",
+        "name":  "tie"
+    }
+]

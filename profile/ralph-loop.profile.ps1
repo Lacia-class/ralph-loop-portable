@@ -7,7 +7,14 @@ function Invoke-RalphLoopScript {
   )
 
   $script = "$env:USERPROFILE\.codex\skills\ralph-loop\scripts\ralph_loop.py"
-  if (!(Test-Path $script)) { throw "ralph_loop.py not found: $script" }
+  if (!(Test-Path $script)) {
+    $portable = Join-Path $PSScriptRoot "..\skills\ralph-loop\scripts\ralph_loop.py"
+    if (Test-Path $portable) {
+      $script = (Resolve-Path $portable).Path
+    } else {
+      throw "ralph_loop.py not found: $script"
+    }
+  }
   python -u $script @Args
 }
 
@@ -428,6 +435,336 @@ function Start-ProjectDevLoop {
   }
 }
 
+function Invoke-CodexAgentTeamScript {
+  [CmdletBinding()]
+  param(
+    [Parameter(ValueFromRemainingArguments=$true)]
+    [string[]]$Args
+  )
+
+  $script = "$env:USERPROFILE\.codex\skills\ralph-loop\scripts\agent_team\codex_agent_team.py"
+  if (!(Test-Path $script)) {
+    $portable = Join-Path $PSScriptRoot "..\skills\ralph-loop\scripts\agent_team\codex_agent_team.py"
+    if (Test-Path $portable) {
+      $script = (Resolve-Path $portable).Path
+    } else {
+      throw "codex_agent_team.py not found: $script"
+    }
+  }
+  python -u $script @Args
+}
+
+function Resolve-CodexAgentTeamConfigPath {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = ""
+  )
+
+  if ($Config) {
+    if (!(Test-Path $Config)) { throw "Config not found: $Config" }
+    return (Resolve-Path $Config).Path
+  }
+
+  if ($TeamRoot) {
+    if (!(Test-Path $TeamRoot)) { throw "Team root not found: $TeamRoot" }
+    $cfg = Join-Path (Resolve-Path $TeamRoot).Path "team_config.json"
+    if (!(Test-Path $cfg)) { throw "Team config not found: $cfg" }
+    return $cfg
+  }
+
+  $default = Join-Path (Get-Location).Path ".codex-agent-team\team_config.json"
+  if (Test-Path $default) { return (Resolve-Path $default).Path }
+
+  throw "Team config not found. Use -Config or -TeamRoot."
+}
+
+function Initialize-CodexAgentTeam {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [string]$ProjectPath,
+    [Parameter(Mandatory=$true)]
+    [string]$Accounts,
+    [string]$Commander = "",
+    [string]$Reviewer = "",
+    [string]$Workers = "",
+    [string]$TeamRoot = "",
+    [string]$TeamName = "",
+    [string]$Branch = "",
+    [switch]$OverwritePrompts
+  )
+
+  $cmd = @("init", "--project-path", $ProjectPath, "--accounts", $Accounts)
+  if ($Commander) { $cmd += @("--commander", $Commander) }
+  if ($Reviewer) { $cmd += @("--reviewer", $Reviewer) }
+  if ($Workers) { $cmd += @("--workers", $Workers) }
+  if ($TeamRoot) { $cmd += @("--team-root", $TeamRoot) }
+  if ($TeamName) { $cmd += @("--team-name", $TeamName) }
+  if ($Branch) { $cmd += @("--branch", $Branch) }
+  if ($OverwritePrompts) { $cmd += "--overwrite-prompts" }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Start-CodexAgentTeam {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [int]$MaxIterations = 0,
+    [int]$HeartbeatSeconds = 20,
+    [string]$Only = "",
+    [string]$Model = "",
+    [string]$Profile = "",
+    [ValidateSet("", "read-only", "workspace-write", "danger-full-access")]
+    [string]$Sandbox = "",
+    [switch]$LlmOnly,
+    [switch]$DetachConsole,
+    [switch]$Restart,
+    [switch]$AutoFailover,
+    [switch]$NoAutoFailover,
+    [string]$FailoverAccounts = ""
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @(
+    "start",
+    "--config", $cfg,
+    "--max-iterations", "$MaxIterations",
+    "--heartbeat-seconds", "$HeartbeatSeconds",
+    "--dangerous"
+  )
+  if ($Only) { $cmd += @("--only", $Only) }
+  if ($Model) { $cmd += @("--model", $Model) }
+  if ($Profile) { $cmd += @("--profile", $Profile) }
+  if ($Sandbox) { $cmd += @("--sandbox", $Sandbox) }
+  if ($LlmOnly) { $cmd += "--llm-only" }
+  if ($DetachConsole) { $cmd += "--detach-console" }
+  if ($Restart) { $cmd += "--restart" }
+  $enableFailover = $true
+  if ($NoAutoFailover) { $enableFailover = $false }
+  if ($AutoFailover) { $enableFailover = $true }
+  if ($enableFailover) {
+    $cmd += "--auto-account-failover"
+    if ($FailoverAccounts) { $cmd += @("--failover-accounts", $FailoverAccounts) }
+  } else {
+    $cmd += "--no-auto-account-failover"
+  }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Stop-CodexAgentTeam {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [string]$Only = ""
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("stop", "--config", $cfg)
+  if ($Only) { $cmd += @("--only", $Only) }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Get-CodexAgentTeamStatus {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [string]$Only = ""
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("status", "--config", $cfg)
+  if ($Only) { $cmd += @("--only", $Only) }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Watch-CodexAgentTeamLog {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [Parameter(Mandatory=$true)]
+    [string]$Agent,
+    [int]$Lines = 120,
+    [switch]$Follow
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("watch", "--config", $cfg, "--agent", $Agent, "--lines", "$Lines")
+  if ($Follow) { $cmd += "--follow" }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Watch-CodexAgentTeamAll {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [string]$Only = "",
+    [int]$Lines = 60,
+    [switch]$Follow
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("watch-all", "--config", $cfg, "--lines", "$Lines")
+  if ($Only) { $cmd += @("--only", $Only) }
+  if ($Follow) { $cmd += "--follow" }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Pause-CodexAgentTeam {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [string]$Only = ""
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("pause", "--config", $cfg)
+  if ($Only) { $cmd += @("--only", $Only) }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Resume-CodexAgentTeam {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [string]$Only = ""
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("resume", "--config", $cfg)
+  if ($Only) { $cmd += @("--only", $Only) }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Inject-CodexAgentTeam {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [string]$Only = "",
+    [switch]$Prepend,
+    [Parameter(Mandatory=$true, Position=0, ValueFromRemainingArguments=$true)]
+    [string[]]$Instruction
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("inject", "--config", $cfg)
+  if ($Only) { $cmd += @("--only", $Only) }
+  if ($Prepend) { $cmd += "--prepend" }
+  $cmd += $Instruction
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Add-CodexAgentTeamTask {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [ValidateSet("P0","P1","P2")]
+    [string]$Priority = "P1",
+    [string]$TaskId = "",
+    [Parameter(Mandatory=$true)]
+    [string]$Title,
+    [Parameter(Mandatory=$true)]
+    [string]$Acceptance,
+    [switch]$NoPush
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @(
+    "enqueue",
+    "--config", $cfg,
+    "--priority", $Priority,
+    "--title", $Title,
+    "--acceptance", $Acceptance
+  )
+  if ($TaskId) { $cmd += @("--task-id", $TaskId) }
+  if ($NoPush) { $cmd += "--no-push" }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Get-CodexAgentTeamAccounts {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = ""
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  Invoke-CodexAgentTeamScript "accounts" "--config" $cfg
+}
+
+function Refresh-CodexAgentTeamPrompts {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [string]$Only = ""
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("refresh-prompts", "--config", $cfg)
+  if ($Only) { $cmd += @("--only", $Only) }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Add-CodexAgentTeamWorker {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [string]$Name = "",
+    [string]$Account = "",
+    [ValidateSet("worker_general","worker_docs","worker_quality")]
+    [string]$Role = "worker_general",
+    [switch]$AllowAccountReuse,
+    [switch]$NoStart,
+    [int]$MaxIterations = 0,
+    [switch]$LlmOnly,
+    [int]$HeartbeatSeconds = 20,
+    [switch]$NoAutoFailover
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @(
+    "add-worker",
+    "--config", $cfg,
+    "--role", $Role,
+    "--max-iterations", "$MaxIterations",
+    "--heartbeat-seconds", "$HeartbeatSeconds"
+  )
+  if ($Name) { $cmd += @("--name", $Name) }
+  if ($Account) { $cmd += @("--account", $Account) }
+  if ($AllowAccountReuse) { $cmd += "--allow-account-reuse" }
+  if ($NoStart) { $cmd += "--no-start" }
+  if ($LlmOnly) { $cmd += "--llm-only" }
+  if ($NoAutoFailover) { $cmd += "--no-auto-account-failover" }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
+function Remove-CodexAgentTeamWorker {
+  [CmdletBinding()]
+  param(
+    [string]$Config = "",
+    [string]$TeamRoot = "",
+    [Parameter(Mandatory=$true)]
+    [string]$Agent,
+    [switch]$Force
+  )
+
+  $cfg = Resolve-CodexAgentTeamConfigPath -Config $Config -TeamRoot $TeamRoot
+  $cmd = @("remove-agent", "--config", $cfg, "--agent", $Agent)
+  if ($Force) { $cmd += "--force" }
+  Invoke-CodexAgentTeamScript @cmd
+}
+
 Set-Alias rl Invoke-RalphLoopScript
 Set-Alias rla Set-RalphAccount
 Set-Alias rlx Invoke-RalphLoop
@@ -439,4 +776,19 @@ Set-Alias rlw Start-RalphLoopWatch
 Set-Alias rllog Show-RalphLog
 Set-Alias rlreson Start-ResonDevLoop
 Set-Alias rlproj Start-ProjectDevLoop
+Set-Alias rlteam Invoke-CodexAgentTeamScript
+Set-Alias rlteam-init Initialize-CodexAgentTeam
+Set-Alias rlteam-start Start-CodexAgentTeam
+Set-Alias rlteam-stop Stop-CodexAgentTeam
+Set-Alias rlteam-status Get-CodexAgentTeamStatus
+Set-Alias rlteam-watch Watch-CodexAgentTeamLog
+Set-Alias rlteam-watchall Watch-CodexAgentTeamAll
+Set-Alias rlteam-task Add-CodexAgentTeamTask
+Set-Alias rlteam-accounts Get-CodexAgentTeamAccounts
+Set-Alias rlteam-refresh Refresh-CodexAgentTeamPrompts
+Set-Alias rlteam-add Add-CodexAgentTeamWorker
+Set-Alias rlteam-rm Remove-CodexAgentTeamWorker
+Set-Alias rlteam-pause Pause-CodexAgentTeam
+Set-Alias rlteam-resume Resume-CodexAgentTeam
+Set-Alias rlteam-inject Inject-CodexAgentTeam
 # ========== End Ralph Loop Shortcuts ==========

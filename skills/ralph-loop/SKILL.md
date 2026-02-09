@@ -212,6 +212,66 @@ Notes:
 
 If you run multiple tasks in the same repo at the same time, set a different `-StateTag` for each task so their state/log files do not collide.
 
+## Codex Agent Team mode
+
+This skill now includes a full lock-based multi-agent harness:
+- script: `%USERPROFILE%\.codex\skills\ralph-loop\scripts\agent_team\codex_agent_team.py`
+- templates: `%USERPROFILE%\.codex\skills\ralph-loop\templates\agent-team\`
+- profile shortcuts:
+  - `rlteam-init`
+  - `rlteam-start`
+  - `rlteam-status`
+  - `rlteam-watch`
+  - `rlteam-task`
+  - `rlteam-stop`
+
+Example:
+
+```powershell
+. $PROFILE
+
+rlteam-init `
+  -ProjectPath "C:\Users\walty\Desktop\reson" `
+  -Accounts "mers,htoo,yiye,man,bal"
+
+rlteam-start -MaxIterations 0
+rlteam-status
+rlteam-watch -Agent commander -Follow
+rlteam-watchall -Follow
+```
+
+Team protocol files are initialized in repo:
+- `AGENT_TEAM_PROTOCOL.md`
+- `task_backlog/P0.md`, `task_backlog/P1.md`, `task_backlog/P2.md`
+- `current_tasks/*.lock`
+- `progress/*.md`
+
+Team runtime control:
+
+```powershell
+rlteam-pause
+rlteam-resume
+rlteam-inject -Only commander "re-split P0 backlog into 30-minute tasks"
+rlteam-inject "all workers: prioritize flaky test fixes this round"
+```
+
+Notes:
+- `rlteam-start` enables account failover by default.
+- Disable only if needed: `rlteam-start -NoAutoFailover`.
+- Runtime staffing (while loop is running):
+  - `rlteam-refresh` (for existing teams to load latest commander scaling instructions)
+  - `rlteam-accounts`
+  - `rlteam-add -Role worker_general`
+  - `rlteam-rm -Agent worker-1-xxx`
+
+Commander can also call from its own iteration:
+
+```powershell
+python "{{HARNESS_SCRIPT}}" accounts --config "{{TEAM_ROOT}}\team_config.json"
+python "{{HARNESS_SCRIPT}}" add-worker --config "{{TEAM_ROOT}}\team_config.json" --role worker_general
+python "{{HARNESS_SCRIPT}}" remove-agent --config "{{TEAM_ROOT}}\team_config.json" --agent "worker-1-xxx"
+```
+
 ## Failure handling (important)
 
 - Quota failover now also matches these messages:

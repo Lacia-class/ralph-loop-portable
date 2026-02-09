@@ -83,6 +83,53 @@ cd C:\Users\walty\Desktop\Agent_team\ralph-loop-portable
 powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 ```
 
+## 6. Agent Team mode (Codex-native)
+
+This package now includes a lock-based multi-agent harness that mirrors the
+"agent teams" workflow in Codex:
+- isolated workspace per agent
+- git-backed task backlog
+- `current_tasks/*.lock` ownership protocol
+- parallel long-running loops per account
+- commander/reviewer/worker role templates
+
+Quick start:
+
+```powershell
+. $PROFILE
+
+rlteam-init `
+  -ProjectPath "C:\path\to\repo" `
+  -Accounts "mers,htoo,yiye,man,bal"
+
+rlteam-start
+rlteam-status
+```
+
+Useful commands:
+- `rlteam-status`
+- `rlteam-watch -Agent commander -Follow`
+- `rlteam-watchall -Follow`
+- `rlteam-pause` / `rlteam-resume`
+- `rlteam-inject -Only commander "..."` (or broadcast to all by omitting `-Only`)
+- `rlteam-accounts` (show free/assigned accounts)
+- `rlteam-refresh` (refresh commander/worker prompts to latest templates)
+- `rlteam-add -Role worker_general` (add worker during runtime)
+- `rlteam-rm -Agent worker-1-xxx` (remove worker during runtime)
+- `rlteam-task -Priority P0 -Title "..." -Acceptance "..."`
+- `rlteam-stop`
+
+Notes:
+- `rlteam-start` now enables account failover by default for long autonomous runs.
+- Disable failover only when needed: `rlteam-start -NoAutoFailover`.
+- Commander can self-scale team from prompt using:
+  - `python "{{HARNESS_SCRIPT}}" accounts --config "{{TEAM_ROOT}}\\team_config.json"`
+  - `python "{{HARNESS_SCRIPT}}" add-worker --config "{{TEAM_ROOT}}\\team_config.json" --role worker_general`
+  - `python "{{HARNESS_SCRIPT}}" remove-agent --config "{{TEAM_ROOT}}\\team_config.json" --agent "<worker-name>"`
+
+Direct script path:
+- `%USERPROFILE%\.codex\skills\ralph-loop\scripts\agent_team\codex_agent_team.py`
+
 ## Notes
 
 - `install.ps1` updates both profile files if present:

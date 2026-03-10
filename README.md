@@ -183,14 +183,21 @@ Error state fields: `last_error_kind`, `last_error_message`, `last_error_at`
 - [Contributing](CONTRIBUTING.md) — Development workflow and guidelines
 - [Changelog](CHANGELOG.md) — Version history
 
-## Disclaimer
+## ⚠️ Disclaimer / 免责声明
+
+> **This project is for educational and learning purposes only.**
+>
+> **本项目仅供学习与研究用途，请勿用于任何商业或非法目的。**
 
 This project is an **independent, community-built tool** and is **not affiliated with, endorsed by, or officially associated with OpenAI** in any way. "Codex" and "OpenAI" are trademarks of OpenAI, Inc.
 
-- **Use at your own risk.** The authors assume no liability for any damages, data loss, or unexpected costs arising from the use of this software.
-- **API costs are your responsibility.** This toolkit automates calls to the OpenAI Codex CLI. You are solely responsible for monitoring and managing your API usage and any associated charges across all configured accounts.
+- **For learning and research only.** This project is published solely for technical learning and research purposes. The author(s) do not encourage or endorse any use that violates third-party terms of service.
+- **The author assumes no responsibility.** The author(s) shall not be held liable for any direct, indirect, incidental, or consequential damages, losses, account suspensions, API charges, or any other consequences arising from the use or misuse of this software.
+- **Use at your own risk.** By using this software, you acknowledge that you bear full responsibility for your own actions, including compliance with all applicable laws, regulations, and platform policies.
+- **API costs are your responsibility.** This toolkit automates interactions with the OpenAI Codex CLI. You are solely responsible for monitoring and managing your API usage and any associated charges.
 - **No warranty.** This software is provided "as is", without warranty of any kind, express or implied. See the [LICENSE](LICENSE) for full terms.
-- **Account compliance.** Users are responsible for ensuring their use of this tool complies with [OpenAI's Usage Policies](https://openai.com/policies/usage-policies) and Terms of Service.
+
+> 使用本软件即表示您已阅读并同意以上声明。因使用本项目产生的一切后果（包括但不限于账号封禁、费用产生、数据丢失等）均由使用者自行承担，与项目作者无关。
 
 ## Contributing
 

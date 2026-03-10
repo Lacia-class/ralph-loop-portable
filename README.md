@@ -183,6 +183,15 @@ Error state fields: `last_error_kind`, `last_error_message`, `last_error_at`
 - [Contributing](CONTRIBUTING.md) — Development workflow and guidelines
 - [Changelog](CHANGELOG.md) — Version history
 
+## Disclaimer
+
+This project is an **independent, community-built tool** and is **not affiliated with, endorsed by, or officially associated with OpenAI** in any way. "Codex" and "OpenAI" are trademarks of OpenAI, Inc.
+
+- **Use at your own risk.** The authors assume no liability for any damages, data loss, or unexpected costs arising from the use of this software.
+- **API costs are your responsibility.** This toolkit automates calls to the OpenAI Codex CLI. You are solely responsible for monitoring and managing your API usage and any associated charges across all configured accounts.
+- **No warranty.** This software is provided "as is", without warranty of any kind, express or implied. See the [LICENSE](LICENSE) for full terms.
+- **Account compliance.** Users are responsible for ensuring their use of this tool complies with [OpenAI's Usage Policies](https://openai.com/policies/usage-policies) and Terms of Service.
+
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
